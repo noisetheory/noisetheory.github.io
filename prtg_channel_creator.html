@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
+	
+	<!-- CSS -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
+    <!-- Default theme -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/default.min.css"/>
+    <!-- Semantic UI theme -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/semantic.min.css"/>
+    <!-- Bootstrap theme -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
+	
+	<style>
+	    #sensor-list {
+	        display: flex;
+	        align-items: center;
+	        align-content: center;
+	        flex-wrap: wrap;
+	        padding: 20px;
+	    }
+	    
+	    #sensor-list > div {
+	        width: 200px;
+	        padding: 10px 20px;
+	        
+	    }
+	    
+	    .output {
+	        background-color: #EEF;
+            padding: 20px 50px;
+	    }
+	    .output > span {
+	        font-family: courier;
+	    }
+	</style>
+</head> 
+
+<body>
+
+    <div class="container-fluid">
+
+        <h2 class="text-center py-3">PRTG Custom Channel Creator v0.2</h2>
+
+        <h4>Step One - Export Load Sensors from PRTG to CSV</h4>
+        <p>The sensor on each PDU for total kilowatts is tagged with 'kw_per_pdu'. PRTG has an API for exporting data, such as sensors, to CSV, and we can filter by tags.</p>
+        <p> 
+            Export URL:<BR>
+            <a href="http://appvmpd063//api/table.xml?content=sensors&output=csvtable&columns=objid,device,sensor,status,lastvalue,tags&count=5000&filter_tags=@tag(kw_per_pdu)" target=_blank>
+                http://appvmpd063//api/table.xml?content=sensors&output=csvtable&columns=objid,device,sensor,status,lastvalue,tags&count=5000&filter_tags=@tag(kw_per_pdu)
+            </a>
+        </p>
+        
+        
+        <h4 class="mt-5">Step Two - Convert CSV to JSON format</h4>
+        <p>
+            Convert exported data to JSON format. Required fields:<BR>
+             id - the channel id<BR>
+             device - the name of the device<BR>
+        </p>
+        
+        <p>
+            Example JSON:<BR>
+            [{"id": 5922,"device": "espdcpdua8a"},{"id": 5923,"device": "espdcpdua8b"}]
+        </p>
+            
+        <p>CSV to JSON Converter: <a href="https://www.convertcsv.com/csv-to-json.htm" target=_blank>https://www.convertcsv.com/csv-to-json.htm</a></p>
+        
+        
+        <h4 class="mt-5">Step Three - Paste JSON</h4>
+        
+        <form>
+            <div class="form-group">
+                <label for="json">Paste JSON format list of sensors</label>
+                <textarea class="form-control" id="json" rows="8"></textarea>
+            </div>
+            <button type="button" id="btn-import" class="btn btn-primary">Import JSON</button>
+        </form>
+    </div>
+    
+    
+    <div class="container-fluid py-5">
+        
+        <h4 class="mt-5">Step Four - Select and Build</h4>
+         
+        <p>Select PDU's to combine as custom channel and press "generate" to create sensor definition.</p>
+         
+        <p>
+            
+            <form class="form-inline">
+                <input type="text" class="form-control mb-2 mr-sm-2" id="sensor-name" name="sensor-name" placeholder="Enter Sensor Name">
+                <button type="button" class="btn btn-success btn-generate mb-2">Generate Sensor Definition</button>
+            </form>
+
+        </p>
+        
+        <div class="output" style="display:none;">
+            <h4>Result</h4>
+            <hr>
+            <span></span>
+        </div>
+        
+        <hr> 
+        
+        <div class="row">
+            <div class="col">
+                <h5>A Row</h5>
+                <div class="row-a"></div>
+            </div>
+            
+            <div class="col">
+                <h5>C Row</h5>
+                <div class="row-c"></div>
+            </div>
+            
+            <div class="col">
+                <h5>D Row</h5>
+                <div class="row-d"></div>
+            </div>
+            
+            <div class="col">
+                <h5>E Row</h5>
+                <div class="row-e"></div>
+            </div>
+            
+            <div class="col">
+                <h5>Z Row</h5>
+                <div class="row-z"></div>
+            </div>
+            
+        </div>
+        
+        
+    </div>
+    
+
+    <!-- JQUERY-->
+	<script src="https://code.jquery.com/jquery-3.5.1.js"></script> 
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    
+    <!-- JavaScript -->
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+
+    <script>
+        $(function(){
+            $('#btn-import').on("click", function() {
+                var json =  $('#json').val();
+                if (isJsonString(json)) {
+                    //handle json
+                    json = JSON.parse(json);
+                    $.each(json, function(index, sensor){
+                        row_id = sensor.device.charAt(8);
+                        
+                        var build_sensor=sensor_template;
+                        build_sensor=build_sensor.replace(/{{id}}/g, sensor.id);
+                        build_sensor=build_sensor.replace(/{{device}}/g, sensor.device);
+                        $('.row-'+row_id).append(build_sensor);
+                    });
+                    
+                    
+                } else {
+                    //invalid json
+                    alertify.error('Input is not valid JSON!', 3, "bottom-center");
+                }
+            });
+            
+            
+            $('.btn-generate').on("click", function(){
+                var sensor_array = [];
+                
+                var sensor_name = $("input:text[name='sensor-name']").val();
+                if (sensor_name == "") {
+                    sensor_name = "New Sensor Name";
+                }
+                
+                $("input:checkbox[name='device']:checked").each(function(){
+                    var sensor = {};
+                    sensor.id = $(this).val();
+                    sensor.device = $(this).attr('data-device');
+                    sensor_array.push(sensor);
+                });    
+                
+                if (sensor_array.length > 1) {
+                    
+                    //sensor array suitable, build definition..
+                    var count = 1;
+                    var definition = "";
+                    
+                    sensor_array.forEach(function(dev){ 
+                       definition += '#'+count+':'+dev.device+'\n';
+                       definition += 'Channel('+dev.id+',0)\n\n';
+                       count++;
+                    });
+                    
+                    definition += '#'+count+':'+sensor_name+'\n';
+                    sensor_array.forEach(function(val, key, sensor_array){ 
+                        definition += 'Channel('+val.id+',0)';
+                        if (key !== sensor_array.length - 1){
+                            definition += '+';   
+                        }
+                    });
+                    
+                    $('.output').show();
+                    $('.output').find('span').html(definition.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+                    
+                    
+                    
+                } else {
+                    alertify.error('You must select 2 or more PDUs!', 3, "bottom-center"); 
+                }
+            });
+            
+        });
+        
+        function isJsonString(str) {
+            try {
+                JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+            return true;
+        }
+        
+        var sensor_template =  `<div class="sensor" data-id={{id}} data-name="{{device}}">
+                                    <input class="" type="checkbox" name="device" value="{{id}}" data-device="{{device}}">
+                                    <label class="" for="defaultCheck1" name="{{device}}">{{device}}</label>
+                                </div>`;
+    </script>
+</body>
+</html>
